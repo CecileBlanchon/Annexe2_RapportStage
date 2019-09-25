@@ -1,6 +1,6 @@
 ## Annexe2 Rapport de stage (2019) : Réparation de l'ADN chez les Rotifères Bdelloïdes
 
-Ce documents contient le détail des analyses phylogénétiques pour les protéines des voies de réparation NHEJ et HR : script utilisé pour l'obtenion des query protéique et pour l'obtension des arbres d'évolution. Il contient également 3 fichiers des arbres obtenus pour chaque protéine.
+Ce documents contient le détail des analyses phylogénétiques pour les protéines des voies de réparation NHEJ et HR (ScriptPropre.txt). Il contient également 3 fichiers des arbres obtenus pour chaque protéine.
 
 ## LISTES DES DOCUMENTS CONTENUS DANS L'ANNEXE
 
