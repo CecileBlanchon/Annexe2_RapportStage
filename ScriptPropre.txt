@@ -1,0 +1,150 @@
+############## QUERY ##############
+
+XRCC4 		# NHEJ récupéré avec la séquence trouvé par Hecox Lea
+Ku70		# NHEJ récupéré avec Crassosrea gigas (predicted) et Capitella teleta (hypothetical) - blastp - 43% d'identité - 614 de long
+Ku80		# NHEJ récupéré avec Tigriopus japonicus - blastp - 27% d'identité - 774 de long
+DNA-PKcs	# NHEJ récupéré avec Mus musculus - blastp - 30% d'identité - 4500 de long
+Artemis		# NHEJ récupéré avec Brachionus plicatilis et Crassostrea gigas - blastp - 33% d'identité - 400 de long
+Ligase4		# NHEJ récupéré avec Drosphila melanogaster et Crassostrea gigas - blastp - 39% d'identité - 1026 de long
+XLF		# NHEJ récupéré avec la séquence trouvé par Hecox Lea 
+
+Rad51 		# HRR récupéré avec la séquence trouvé par Hecox Lea
+BRCA1		# HRR récupéré avec Mus musculus et Rattus norvegicus - tblastn - 25% d'identité - 200 de long - 2 OFR trouvés ( 150 nt - ATG - standard)
+BRCA2		# HRR récupéré avec Onchecerca flexuosa - tblastn - 24% d'identité - 230 de long - 2 OFR trouvés ( 150 nt - ATG - standard)
+Rad52		# HRR NON récupéré (test avec Pomacea canaliculata, Capitella tela, Mus musculus et Biomphalaria glabrata) - blastp et tblastn
+Rad54		# HRR récupéré avec Mus musculus, Brachionus sp. 'koreanus' - blastp - 72% d'identité - 703 de long
+RPA		# HRR récupéré avec Brachionus ibericus et Trichinella papuae - blastp - 37% d'identité - 637 de long
+MRN =	Mre11	# HRR récupéré avec Rattus norvegicus, Brachionus manjavacas (partiel) et Drosophila busckii - blastp - 48% d'identité - 500 de long
+	Rad50	# HRR récupéré avec Brachionus manjavacas, Mus musculus et Trichinella nativa - blastp - 35% d'identité - 1336 de long
+	Nbs1	# HRR NON récupéré (test avec Rattus norvegicus et Xenopus laevis) - blastp et tblastn
+
+############## DATA BASE PROT #############
+Adineta ricciae		# publi Comparative genomics of bdelloid rotifers (2018)
+Adineta vaga		# séquençage 2019
+Apis mellifera 		# CDS NCBI - GCF_003254395.2
+Aplysia californica 	# CDS NCBI - GCF_000002075.1
+Bombus terrestris 	# CDS NCBI - GCF_000214255.1
+Brachionus plicatilis 	# CDS NCBI - GCA_000371015.1
+Caenorhabditis elegans 	# CDS NCBI - GCF_000002985.6
+Capitella teleta 	# CDS NCBI - GCA_000328365.1
+Crassostrea gigas 	# CDS NCBI - GCF_000297895.1
+Daphnia pulex 		# CDS NCBI - GCA_000187875.1
+Drosophila melanogaster # CDS NCBI - GCF_000001215.4
+Ixodes scapularis 	# CDS NCBI - GCF_002892825.2
+Limulus polyphemus 	# CDS NCBI - GCF_000517525.1
+Lingula anatina 	# CDS NCBI - GCF_001039355.2
+Lottia gigantea 	# CDS NCBI - GCF_000327385.1
+Octopus bimaculoides 	# CDS NCBI - GCF_001194135.1
+Priapulus caudatus 	# CDS NCBI - GCF_000485595.1
+Rotaria_macrura		# publi Comparative genomics of bdelloid rotifers (2018)
+Rotaria_magnacalcarata	# publi Comparative genomics of bdelloid rotifers (2018)
+Tribolium castaneum 	# CDS NCBI - GCF_000002335.3
+
+
+--------------------------------------------------------------------------------
+##### recherche et récupération de query dans les protéines d'A.vaga #####
+
+for query in *.ncbi.prot.fasta; do
+	for db in Adineta_vaga.proteins.fa; do
+		echo -e "\n$query versus $db"
+		makeblastdb -in $db -dbtype prot -parse_seqids -out $db
+		blastp -query $query -db $db -evalue 1e-20 -num_threads 6 -outfmt 6 -out $query.vs.$db.blastout6
+		cat $query.vs.$db.blastout6 | awk '{if ($4 >= 50){print}}' | cut -f2,9,10 | sort -k1n,2n | awk '{if ($2 > $3){print $1,$3,$2;}else{print $1,$2,$3;}}' | sed "s/ /___/g" | sed "s/___/\t/" | sed "s/___/-/" > $query.versus.$db.range.txt
+		blastdbcmd -db $db -entry_batch $query.versus.$db.range.txt -out $query.versus.$db.all_parts.fasta
+	done
+done
+
+##### recherche dans la base de donnée protéique à partir de la query protéique trouvée #####
+for query in *.A.vaga.prot.fasta ; do
+	for db in *.proteins.all.fasta Adineta_vaga.proteins.fasta; do
+		echo -e "\n$query versus $db"
+		makeblastdb -in $db -dbtype prot -parse_seqids -out $db
+		blastp -query $query -db $db -evalue 1e-20 -num_threads 6 -outfmt 6 -out $query.vs.$db.blastout6
+		cat $query.vs.$db.blastout6 | awk '{if ($4 >= 30){print}}' | cut -f2,9,10 | sort -k1n,2n | awk '{if ($2 > $3){print $1,$3,$2;}else{print $1,$2,$3;}}' | sed "s/ /___/g" | sed "s/___/\t/" | sed "s/___/-/" > $query.versus.$db.range.txt
+		blastdbcmd -db $db -entry_batch $query.versus.$db.range.txt -out $query.versus.$db.all_parts.fasta
+	done
+	cat $query.versus.*.all_parts.fasta > $query.all_parts.fasta
+done
+
+##### renome les sequences du fasta avec le bon nom d'espèce (d'après les fichiers blast) #####
+for query in *.A.vaga.prot.fasta; do
+	for input in $query.all_parts.fasta; do
+		output=$input.renamed
+		cat $input | while read line; do 
+			if [[ "$line" == ">"* ]] ; then
+				echo $line | sed 's/|/\t/' | sed 's/:/\t/' | sed 's/\s/\t/' | while read truc1 ID range truc2 ; do
+					echo -e "$truc1\n$ID\n$range\n$truc2"
+					species=`grep -l $ID *.blastout6* | sed "s/$query\.vs\.//" | sed 's/\./\t/' | cut -f1`
+					echo -e ">$species.$ID.$range" >> $output
+					echo
+				done
+			else
+				echo -e $line >> $output
+			fi
+		done
+	done
+done
+
+# aligner les séquences protéiques entre elles avec Seaview à partir du fichier $query et enregistrer le fichier sous $query.all_parts.renamed.align.fst
+
+# si l'alignement n'est pas convainquant, nettoyer les séquences avec HMMCleaner
+
+##### trace les arbres d'évolution de chaque gène #####
+for query in *.A.vaga.prot.fasta; do
+	/home/cecileblanchon/Desktop/softwares/iqtree-1.6.11-Linux/bin/iqtree -nt 6 -s $query.all_parts.renamed.align.fst -m GTR20+R4+F -pre $query.all_parts.renamed.align.fst_GTR20+R4+F_1MLsearch
+done
+
+-----------------------------------------------------------------------------
+##### recherche et récupération de query dans le génome d'A.vaga #####
+for query in *.ncbi.prot.fasta; do
+	for db in Assembly_II.fasta; do
+		echo -e "\n$query versus $db"
+		makeblastdb -in $db -dbtype nucl -parse_seqids -out $db
+		tblastn -query $query -db $db -evalue 1e-10 -num_threads 6 -outfmt 6 -out $query.vs.$db.blastout6
+		cat $query.vs.$db.blastout6 | awk '{if ($4 >= 60){print}}' | cut -f2,9,10 | sort -k1n,2n | awk '{if ($2 > $3){print $1,$3,$2;}else{print $1,$2,$3;}}' | sed "s/ /___/g" | sed "s/___/\t/" | sed "s/___/-/" > $query.versus.$db.range.txt
+		blastdbcmd -db $db -entry_batch $query.versus.$db.range.txt -out $query.versus.$db.all_parts.fasta
+	done
+done
+
+# effectuer une recherche d'ORF sur la séquence nucléotidique trouvée pour chaque $protein (avec ORFfinder : taille minimale d’ORF 150 nt, code génétique standard et « ATG » comme codon start) enregister la séquence protéique correspondant aux ORF sous $protein.A.vaga.prot_ORFfinder_150nt_ATG.fasta
+
+##### recherche dans la base de donnée protéique à partir de la query protéique récupéré avec ORFfinder #####
+for query in *.A.vaga.prot_ORFfinder_150nt_ATG.fasta ; do
+	for db in *.proteins.all.fasta Adineta_vaga.proteins.fasta; do
+		echo -e "\n$query versus $db"
+		makeblastdb -in $db -dbtype prot -parse_seqids -out $db
+		blastp -query $query -db $db -evalue 1e-20 -num_threads 6 -outfmt 6 -out $query.vs.$db.blastout6
+		cat $query.vs.$db.blastout6 | awk '{if ($4 >= 30){print}}' | cut -f2,9,10 | sort -k1n,2n | awk '{if ($2 > $3){print $1,$3,$2;}else{print $1,$2,$3;}}' | sed "s/ /___/g" | sed "s/___/\t/" | sed "s/___/-/" > $query.versus.$db.range.txt
+		blastdbcmd -db $db -entry_batch $query.versus.$db.range.txt -out $query.versus.$db.all_parts.fasta
+	done
+	cat $query.versus.*.all_parts.fasta > $query.all_parts.fasta
+done
+
+##### renome les sequences du fasta avec le bon nom d'espèce (d'après les fichiers blast) #####
+for query in *.A.vaga.prot_ORFfinder_150nt_ATG.fasta; do
+	for input in $query.all_parts.fasta; do
+		output=$input.renamed
+		cat $input | while read line; do 
+			if [[ "$line" == ">"* ]] ; then
+				echo $line | sed 's/|/\t/' | sed 's/:/\t/' | sed 's/\s/\t/' | while read truc1 ID range truc2 ; do
+					echo -e "$truc1\n$ID\n$range\n$truc2"
+					species=`grep -l $ID *.blastout6* | sed "s/$query\.vs\.//" | sed 's/\./\t/' | cut -f1`
+					echo -e ">$species.$ID.$range" >> $output
+					echo
+				done
+			else
+				echo -e $line >> $output
+			fi
+		done
+	done
+done
+
+# aligner les séquences protéiques entre elles avec Seaview à partir du fichier $query et enregistrer le fichier sous $query.all_parts.renamed.align.fst
+
+# si l'alignement n'est pas convainquant, nettoyer les séquences avec HMMCleaner
+
+##### trace les arbres d'évolution de chaque gène #####
+for query in *.A.vaga.prot_ORFfinder_150nt_ATG.fasta; do
+	/home/cecileblanchon/Desktop/softwares/iqtree-1.6.11-Linux/bin/iqtree -nt 6 -s $query.all_parts.renamed.align.fst -m GTR20+R4+F -pre $query.all_parts.renamed.align.fst_GTR20+R4+F_1MLsearch
+done
+
